@@ -1,0 +1,10 @@
+run_remote/
+
+runs/
+datasets/
+unsloth_compiled_cache/
+
+.python-version
+__pycache__/
+
+*.swp
