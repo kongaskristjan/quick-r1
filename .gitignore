@@ -1,5 +1,6 @@
 run_remote/
 
+logs/
 runs/
 datasets/
 unsloth_compiled_cache/
