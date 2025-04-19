@@ -155,13 +155,52 @@ def grpo_function(
     ################
     # Load tokenizer and model
     ################
-    tokenizer, model = FastLanguageModel.from_pretrained(
-        model_name_or_path=model_args.model_name_or_path,
-        max_seq_length=model_args.max_completion_length,
-        full_finetuning=True,
+    """
+    lora_rank = 128
+    model, tokenizer = FastLanguageModel.from_pretrained(
+        model_name=model_args.model_name_or_path,
+        max_seq_length=training_args.max_completion_length,
+        load_in_4bit=True,
         fast_inference=True,
-        gpu_memory_utilization=model_args.vllm_gpu_memory_utilization,
+        max_lora_rank=lora_rank,
+        gpu_memory_utilization=training_args.vllm_gpu_memory_utilization,
         use_gradient_checkpointing="unsloth"
+    )
+
+    model = FastLanguageModel.get_peft_model(
+        model,
+        r = lora_rank, # Choose any number > 0 ! Suggested 8, 16, 32, 64, 128
+        target_modules = [
+            "q_proj", "k_proj", "v_proj", "o_proj",
+            "gate_proj", "up_proj", "down_proj",
+        ], # Remove QKVO if out of memory
+        lora_alpha = lora_rank,
+        use_gradient_checkpointing = "unsloth", # Enable long context finetuning
+        random_state = 3407,
+    )
+    """
+
+    lora_rank = 64 # Larger rank = smarter, but slower
+
+    model, tokenizer = FastLanguageModel.from_pretrained(
+        model_name=model_args.model_name_or_path,
+        max_seq_length=training_args.max_completion_length,
+        load_in_4bit=True,
+        fast_inference=True,
+        max_lora_rank=lora_rank,
+        gpu_memory_utilization=training_args.vllm_gpu_memory_utilization,
+    )
+
+    model = FastLanguageModel.get_peft_model(
+        model,
+        r = lora_rank, # Choose any number > 0 ! Suggested 8, 16, 32, 64, 128
+        target_modules = [
+            "q_proj", "k_proj", "v_proj", "o_proj",
+            "gate_proj", "up_proj", "down_proj",
+        ], # Remove QKVO if out of memory
+        lora_alpha = lora_rank,
+        use_gradient_checkpointing = "unsloth", # Enable long context finetuning
+        random_state = 3407,
     )
 
     # What does this do?
@@ -209,18 +248,59 @@ def grpo_function(
     # Instantiate DPO trainer
     #########################
 
+    print("Model loaded.")
+    print(f"Model type: {type(model)}")
+    print("Model attributes:", dir(model)) # See if anything related to vLLM is present
+
+    """
     trainer = GRPOTrainer(
       model=model,
+      processing_class=tokenizer,
       reward_funcs=[format_reward_func, equation_reward_func],
       args=training_args,
       train_dataset=train_dataset,
       eval_dataset=test_dataset,
-      peft_config=get_peft_config(model_args),
-      bf16=is_bfloat16_supported(),
-      fp16=not is_bfloat16_supported(),
+    )
+    """
+
+    # Hyperparameters
+    training_args = GRPOConfig(
+        output_dir="qwen-r1-aha-moment",
+        learning_rate=5e-6,
+        lr_scheduler_type="cosine",
+        optim = "adamw_8bit",
+        adam_beta1 = 0.9,
+        adam_beta2 = 0.99,
+        bf16 = is_bfloat16_supported(),
+        fp16 = not is_bfloat16_supported(),
+        logging_steps = 1,
+        max_steps=100,
+        per_device_train_batch_size=1,
+        gradient_accumulation_steps=1,
+        gradient_checkpointing=True,
+        gradient_checkpointing_kwargs={"use_reentrant": False},
+
+        # GRPO specific parameters
+        max_prompt_length=256,
+        max_completion_length=512, # max length of the generated output for our solution
+        num_generations=8,
+        beta=0.001,
+    )
+    trainer = GRPOTrainer(
+        model=model,
+        processing_class = tokenizer,
+        reward_funcs=[format_reward_func, equation_reward_func],
+        args=training_args,
+        train_dataset=train_dataset,
+        eval_dataset=test_dataset,
     )
 
+    trainer.train()
+    # Save model
+    model.save_lora("grpo_saved_lora")
+    trainer.save_model(training_args.output_dir)
 
+    """
     ###############
     # Training loop
     ###############
@@ -240,21 +320,16 @@ def grpo_function(
     trainer.log_metrics("train", metrics)
     trainer.save_metrics("train", metrics)
     trainer.save_state()
-
-    logger.info("*** Training complete ***")
+    """
 
     ##################################
     # Save model and create model card
     ##################################
 
-    logger.info("*** Save model ***")
-    trainer.model.config.use_cache = True
-    trainer.save_model(training_args.output_dir)
-    logger.info(f"Model saved to {training_args.output_dir}")
-    training_args.distributed_state.wait_for_everyone()  # wait for all processes to load
-
-    tokenizer.save_pretrained(training_args.output_dir)
-    logger.info(f"Tokenizer saved to {training_args.output_dir}")
+    """
+    logger.info("*** Save loras ***")
+    model.save_lora("grpo_saved_lora")
+    logger.info(f"Lora saved to grpo_saved_lora")
 
     # Save everything else on main process
     if trainer.accelerator.is_main_process:
@@ -263,6 +338,7 @@ def grpo_function(
     if training_args.push_to_hub is True:
         logger.info("Pushing to hub...")
         trainer.push_to_hub()
+    """
 
     logger.info("*** Training complete! ***")
 
