@@ -176,7 +176,7 @@ def main():
     # Hyperparameters
     training_args = GRPOConfig(
         output_dir="qwen-r1-aha-moment",
-        learning_rate=5e-6,
+        learning_rate=2e-5,
         lr_scheduler_type="cosine",
         optim = "adamw_8bit",
         adam_beta1 = 0.9,
