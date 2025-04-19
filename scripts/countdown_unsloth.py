@@ -128,7 +128,7 @@ def main():
         load_in_4bit=True,
         fast_inference=True,
         max_lora_rank=lora_rank,
-        gpu_memory_utilization=0.5,
+        gpu_memory_utilization=0.6,
     )
 
     model = FastLanguageModel.get_peft_model(
@@ -184,7 +184,7 @@ def main():
         bf16 = is_bfloat16_supported(),
         fp16 = not is_bfloat16_supported(),
         logging_steps = 1,
-        max_steps=100,
+        max_steps=450,
         per_device_train_batch_size=1,
         gradient_accumulation_steps=1,
         gradient_checkpointing=True,
@@ -192,7 +192,7 @@ def main():
 
         # GRPO specific parameters
         max_prompt_length=256,
-        max_completion_length=512, # max length of the generated output for our solution
+        max_completion_length=1024, # max length of the generated output for our solution
         num_generations=8,
         beta=0.001,
     )
