@@ -57,7 +57,7 @@ def format_reward_func(completions, target, **kwargs):
         if match is None or len(match.groups()) != 2:
             rewards.append(0.0)
         else:
-            rewards.append(1.0)
+            rewards.append(0.2)
       except Exception:
         rewards.append(0.0)
     return rewards
@@ -104,7 +104,7 @@ def equation_reward_func(completions, target, nums, **kwargs):
         result = eval(equation, {"__builtins__": None}, {})
         # Check if the equation is correct and matches the ground truth
         if abs(float(result) - float(gt)) < 1e-5:
-            rewards.append(1.0)
+            rewards.append(0.8)
             if random.random() < 0.10:  # 10% chance to write fully successful samples into a file
                 os.makedirs("logs", exist_ok=True)
                 log_file = "logs/success_completion_samples.txt"
