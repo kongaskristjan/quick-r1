@@ -123,7 +123,7 @@ def main():
     lora_rank = 64 # Larger rank = smarter, but slower. Suggested 8, 16, 32, 64, 128
 
     model, tokenizer = FastLanguageModel.from_pretrained(
-        model_name="Qwen/Qwen2.5-3B-Instruct",
+        model_name="Qwen/Qwen2.5-7B-Instruct",
         max_seq_length=1024,
         load_in_4bit=True,
         fast_inference=True,
