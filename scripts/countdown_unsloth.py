@@ -120,7 +120,7 @@ def equation_reward_func(completions, target, nums, **kwargs):
 
 
 def main():
-    lora_rank = 64 # Larger rank = smarter, but slower. Suggested 8, 16, 32, 64, 128
+    lora_rank = 256  # Larger rank = smarter, but slower. Suggested 8, 16, 32, 64, 128
 
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name="Qwen/Qwen2.5-7B-Instruct",
@@ -139,6 +139,7 @@ def main():
             "gate_proj", "up_proj", "down_proj",
         ], # Remove QKVO if out of memory
         lora_alpha = lora_rank,
+        use_rslora=True,
         use_gradient_checkpointing = "unsloth", # Enable long context finetuning
         random_state = 3407,
     )
