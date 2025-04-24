@@ -23,9 +23,16 @@ handler.setFormatter(
 )
 logger.addHandler(handler)
 
+task_format = """<think>
+[Your step-by-step reasoning]
+</think>
+<answer>
+[Final answer (eg. 2 + 3 / 1)]
+</answer>"""
+
 # Reward functions
 
-def format_reward_func(completions, target, **kwargs):
+def format_reward(completions, target, **kwargs):
     """
     Format: <think>...</think><answer>...</answer>
     Args:
@@ -38,17 +45,10 @@ def format_reward_func(completions, target, **kwargs):
     rewards = []
 
     for completion, gt in zip(completions, target):
-
       try:
         # add synthetic <think> as its already part of the prompt and prefilled for the assistant to more easily match the regex
         completion = "<think>" + completion
-        if random.random() < 0.1:  # 1% chance to write samples into a file
-          os.makedirs("logs", exist_ok=True)
-          log_file = "logs/completion_samples.txt"
-          with open(log_file, "a") as f:
-            f.write(f"\n\n==============\n")
-            f.write(completion)
-        
+
         # Check if the format is correct
         regex = r"^<think>([^<]*(?:<(?!/?think>)[^<]*)*)<\/think>\n<answer>([\s\S]*?)<\/answer>$"
 
@@ -60,9 +60,12 @@ def format_reward_func(completions, target, **kwargs):
             rewards.append(0.2)
       except Exception:
         rewards.append(0.0)
+
+
+
     return rewards
 
-def equation_reward_func(completions, target, nums, **kwargs):
+def equation_reward(completions, target, nums, **kwargs):
     """
     Evaluates completions based on:
     2. Mathematical correctness of the answer
@@ -75,6 +78,7 @@ def equation_reward_func(completions, target, nums, **kwargs):
     Returns:
         list[float]: Reward scores
     """
+
     rewards = []
     for completion, gt, numbers in zip(completions, target, nums):
       try:
@@ -105,18 +109,24 @@ def equation_reward_func(completions, target, nums, **kwargs):
         # Check if the equation is correct and matches the ground truth
         if abs(float(result) - float(gt)) < 1e-5:
             rewards.append(0.8)
-            if random.random() < 0.10:  # 10% chance to write fully successful samples into a file
-                os.makedirs("logs", exist_ok=True)
-                log_file = "logs/success_completion_samples.txt"
-                with open(log_file, "a") as f:
-                    f.write(f"\n\n==============\n")
-                    f.write(completion)
         else:
             rewards.append(0.0)
       except Exception:
             # If evaluation fails, reward is 0
             rewards.append(0.0) 
+
     return rewards
+
+
+def log_completion(completions, target, nums, **kwargs):
+    format_correct = format_reward(completions[:1], target[:1])[0] > 0
+    eq_correct = equation_reward(completions[:1], target[:1], nums[:1])[0] > 0
+    print(f"First completion:\n<think>{completions[0]}\n")
+    print(f"Ground truth: {target[0]}")
+    print(f"Numbers: {nums[0]}")
+    print(f"Format correct?: {'Yes' if format_correct else 'No'}")
+    print(f"Equation correct?: {'Yes' if eq_correct else 'No'}")
+    return [0.0] * len(completions)
 
 
 def main():
@@ -153,11 +163,11 @@ def main():
     def generate_r1_prompt(numbers, target):
         r1_prefix = [{
             "role": "system",
-            "content": "You are a helpful assistant. You first thinks about the reasoning process in the mind and then provides the user with the answer."
+            "content": "You are a helpful assistant. You first think about the solution and then provide the user with the final answer. Provide your reasoning between <think> </think> tags and your final answer in <answer> </answer> tags. Think step by step inside <think> </think> tags."
           },
           { 
             "role": "user",
-            "content": f"Using the numbers {numbers}, create an equation that equals {target}. You can use basic arithmetic operations (+, -, *, /) one or multiple times but each number can only be used once. Show your work in <think> </think> tags. And return the final equation in <answer> </answer> tags, for example <answer> (1 + 2) / 3 </answer>. Think step by step inside <think> tags."
+            "content": f"Using the numbers {numbers}, create an equation that equals {target}. You can use basic arithmetic operations (+, -, *, /) one or multiple times but each number can only be used once. Your answer could be like this:\n\n" + task_format
           },
           {
             "role": "assistant",
@@ -195,14 +205,14 @@ def main():
         max_prompt_length=256,
         max_completion_length=1024, # max length of the generated output for our solution
         num_generations=8,
-        beta=0.001,
+        beta=0.05,
     )
 
     # Training loop
     trainer = GRPOTrainer(
         model=model,
         processing_class = tokenizer,
-        reward_funcs=[format_reward_func, equation_reward_func],
+        reward_funcs=[format_reward, equation_reward, log_completion],
         args=training_args,
         train_dataset=train_dataset,
         eval_dataset=test_dataset,
