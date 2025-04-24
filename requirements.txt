@@ -1,3 +1,4 @@
 unsloth==2025.3.19
 vllm==0.8.2
 tensorboard
+pre-commit==4.2.0

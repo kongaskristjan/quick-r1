@@ -1,4 +1,3 @@
-
 ## Running scripts
 
 ```bash
