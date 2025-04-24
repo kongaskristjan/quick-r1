@@ -121,7 +121,8 @@ def equation_reward(completions, target, nums, **kwargs):
 def log_completion(completions, target, nums, **kwargs):
     format_correct = format_reward(completions[:1], target[:1])[0] > 0
     eq_correct = equation_reward(completions[:1], target[:1], nums[:1])[0] > 0
-    print(f"First completion:\n<think>{completions[0]}\n")
+    print("\n----------------")
+    print(f"First completion:\n<think>{completions[0]}")
     print(f"Ground truth: {target[0]}")
     print(f"Numbers: {nums[0]}")
     print(f"Format correct?: {'Yes' if format_correct else 'No'}")
@@ -133,7 +134,7 @@ def main():
     lora_rank = 256  # Larger rank = smarter, but slower. Suggested 8, 16, 32, 64, 128
 
     model, tokenizer = FastLanguageModel.from_pretrained(
-        model_name="Qwen/Qwen2.5-7B-Instruct",
+        model_name="Qwen/Qwen2.5-3B-Instruct",
         max_seq_length=1024,
         load_in_4bit=True,
         fast_inference=True,
@@ -187,11 +188,12 @@ def main():
     # Hyperparameters
     training_args = GRPOConfig(
         output_dir="qwen-r1-aha-moment",
-        learning_rate=2e-5,
+        learning_rate=2e-6,
         lr_scheduler_type="cosine",
         optim = "adamw_8bit",
         adam_beta1 = 0.9,
         adam_beta2 = 0.99,
+        max_grad_norm = 40.0,
         bf16 = is_bfloat16_supported(),
         fp16 = not is_bfloat16_supported(),
         logging_steps = 1,
