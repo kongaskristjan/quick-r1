@@ -34,7 +34,7 @@ def get_think_and_answer(completion: str) -> tuple[str | None, str | None]:
     completion = "<think>" + completion
 
     # Check if the format is correct and extract the necessary parts
-    regex = r"^<think>([^<]*(?:<(?!/?think>)[^<]*)*)<\/think>\n?<answer>([\s\S]*?)<\/answer>$"
+    regex = r"^<think>([^<]*(?:<(?!/?think>)[^<]*)*)<\/think>\s*<answer>([\s\S]*?)<\/answer>$"
     match = re.fullmatch(regex, completion, re.DOTALL)
     if match is None or len(match.groups()) != 2:
         return None, None
@@ -42,20 +42,20 @@ def get_think_and_answer(completion: str) -> tuple[str | None, str | None]:
     return think, answer
 
 
-def eval_answer(answer: str, numbers: list[str]) -> float | None:
+def eval_answer(answer: str, nums: list[int]) -> float | None:
+    answer = answer.strip()
+
+    # Check if the answer only contains numbers, operators, parentheses, and whitespace
+    allowed_pattern = r"^[\d+\-*/().\s]+$"
+    if not re.match(allowed_pattern, answer):
+        return None
+
+    # Check if the answer uses all the numbers exactly once
+    used_numbers = [int(n) for n in re.findall(r"\d+", answer)]
+    if sorted(used_numbers) != sorted(nums):
+        return None
+
     try:
-        answer = answer.strip()
-
-        # Check if the answer only contains numbers, operators, parentheses, and whitespace
-        allowed_pattern = r"^[\d+\-*/().\s]+$"
-        if not re.match(allowed_pattern, answer):
-            return None
-
-        # Check if the answer uses all the numbers exactly once
-        used_numbers = [int(n) for n in re.findall(r"\d+", answer)]
-        if sorted(used_numbers) != sorted(numbers):
-            return None
-
         # Evaluate the answer
         result = eval(answer, {"__builtins__": None}, {})
         return float(result)
@@ -83,12 +83,12 @@ def format_reward(completions: list[str], **kwargs) -> list[float]:
     return rewards
 
 
-def expression_format_reward(completions: list[str], nums: list[str], **kwargs) -> list[float]:
+def expression_format_reward(completions: list[str], nums: list[int], **kwargs) -> list[float]:
     """
     Checks if the answer is a valid expression using only the numbers provided
     Args:
         completions (list[str]): Generated outputs
-        nums (list[str]): Available numbers
+        nums (list[int]): Available numbers
 
     Returns:
         list[float]: Reward scores
@@ -103,7 +103,7 @@ def expression_format_reward(completions: list[str], nums: list[str], **kwargs) 
     return rewards
 
 
-def equation_reward(completions: list[str], target: list[str], nums: list[str], **kwargs) -> list[float]:
+def equation_reward(completions: list[str], target: list[str], nums: list[int], **kwargs) -> list[float]:
     """
     Evaluates completions based on:
     2. Mathematical correctness of the answer
@@ -111,14 +111,14 @@ def equation_reward(completions: list[str], target: list[str], nums: list[str], 
     Args:
         completions (list[str]): Generated outputs
         target (list[str]): Expected number the expression should evaluate to
-        nums (list[str]): Available numbers
+        nums (list[int]): Available numbers
 
     Returns:
         list[float]: Reward scores
     """
 
     rewards = []
-    for completion, gt in zip(completions, target):
+    for completion, gt in zip(completions, target, strict=True):
         think, answer = get_think_and_answer(completion)
         reward = 0.0
         if answer is not None:
@@ -130,7 +130,7 @@ def equation_reward(completions: list[str], target: list[str], nums: list[str], 
     return rewards
 
 
-def log_completion(completions: list[str], target: list[str], nums: list[str], **kwargs) -> list[float]:
+def log_completion(completions: list[str], target: list[str], nums: list[int], **kwargs) -> list[float]:
     format_correct = format_reward(completions[:1])[0] > 0
     expression_format_correct = expression_format_reward(completions[:1], nums[:1])[0] > 0
     equation_correct = equation_reward(completions[:1], target[:1], nums[:1])[0] > 0
@@ -190,7 +190,7 @@ def main() -> None:
             },
             {
                 "role": "user",
-                "content": f"Using the numbers {nums}, create an expression that equals {target}. You can use basic arithmetic operations (+, -, *, /) one or multiple times but each number can only be used once.",
+                "content": f"Using the numbers {nums}, create an expression that equals {target}. You can use basic arithmetic operations (+, -, *, /), but each number can only be used once.",
             },
             {"role": "assistant", "content": "<think>"},
         ]
