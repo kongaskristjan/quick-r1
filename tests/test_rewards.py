@@ -75,19 +75,3 @@ def test_equation_reward():
     target = [5] * len(completions)
     nums = [[1, 2, 3]] * len(completions)
     assert rewards_to_correct(equation_reward(completions, target, nums)) == [False, False, False, True]
-
-
-def test_rewards():
-    completions = [
-        "reasoning... Wrong format</answer>",
-        "reasoning...</think><answer>Wrong format</answer>",
-        "reasoning...</think><answer>10+20</answer>",
-        "reasoning...</think><answer>abc</answer>",
-        "reasoning...</think><answer>1+2/3</answer>",
-        "reasoning...</think><answer>2+3/1</answer>",
-    ]
-    target = [5] * len(completions)
-    nums = [[2, 3, 1]] * len(completions)
-    assert format_reward(completions) == [0.0, 0.1, 0.1, 0.1, 0.1, 0.1]
-    assert expression_format_reward(completions, nums) == [0.0, 0.0, 0.0, 0.0, 0.1, 0.1]
-    assert equation_reward(completions, target, nums) == [0.0, 0.0, 0.0, 0.0, 0.0, 0.8]

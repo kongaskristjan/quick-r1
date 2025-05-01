@@ -66,6 +66,9 @@ def main() -> None:
         max_completion_length=1024,  # max length of the generated output for our solution
         num_generations=8,
         beta=0.05,
+        scale_rewards=False,
+        loss_type="dr_grpo",
+        mask_truncated_completions=True,
     )
 
     # Training loop

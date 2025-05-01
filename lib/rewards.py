@@ -91,7 +91,7 @@ def format_reward(completions: list[str], **kwargs) -> list[float]:
     for completion in completions:
         think, answer = get_think_and_answer(completion)
         correct = think is not None and answer is not None
-        reward = 0.1 if correct else 0.0
+        reward = 0.5 if correct else 0.0
         rewards.append(reward)
 
     return rewards
@@ -111,7 +111,7 @@ def expression_format_reward(completions: list[str], nums: list[list[int]], **kw
     for completion, nums1 in zip(completions, nums, strict=True):
         think, answer = get_think_and_answer(completion)
         correct = answer is not None and eval_answer(answer, nums1) is not None
-        reward = 0.1 if correct else 0.0
+        reward = 0.5 if correct else 0.0
         rewards.append(reward)
 
     return rewards
@@ -139,7 +139,7 @@ def equation_reward(completions: list[str], target: list[int], nums: list[list[i
         if answer is not None:
             result = eval_answer(answer, nums1)
             if result is not None and abs(result - float(gt)) < 1e-5:
-                reward = 0.8
+                reward = 1.0
         rewards.append(reward)
 
     return rewards
