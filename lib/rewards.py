@@ -54,9 +54,9 @@ def get_think_and_answer(completion: str) -> tuple[str | None, str | None]:
     return extracts[1], extracts[3]
 
 
-def eval_answer(answer: str, nums: list) -> float | None:
+def eval_answer(answer: str, nums: list[int]) -> float | None:
     assert isinstance(answer, str)
-    nums = [int(n) for n in nums]
+    assert all(isinstance(n, int) for n in nums)
     answer = answer.strip()
 
     # Check if the answer only contains numbers, operators, parentheses, and whitespace
@@ -97,7 +97,7 @@ def format_reward(completions: list[str], **kwargs) -> list[float]:
     return rewards
 
 
-def expression_format_reward(completions: list[str], nums: list, **kwargs) -> list[float]:
+def expression_format_reward(completions: list[str], numss: list[list[int]], **kwargs) -> list[float]:
     """
     Checks if the answer is a valid expression using only the numbers provided
     Args:
@@ -108,7 +108,7 @@ def expression_format_reward(completions: list[str], nums: list, **kwargs) -> li
         list[float]: Reward scores
     """
     rewards = []
-    for completion in completions:
+    for completion, nums in zip(completions, numss, strict=True):
         think, answer = get_think_and_answer(completion)
         correct = answer is not None and eval_answer(answer, nums) is not None
         reward = 0.1 if correct else 0.0
@@ -117,7 +117,7 @@ def expression_format_reward(completions: list[str], nums: list, **kwargs) -> li
     return rewards
 
 
-def equation_reward(completions: list[str], target: list, nums: list, **kwargs) -> list[float]:
+def equation_reward(completions: list[str], target: list[int], numss: list[list[int]], **kwargs) -> list[float]:
     """
     Evaluates completions based on:
     1. Mathematical correctness of the answer
@@ -133,7 +133,7 @@ def equation_reward(completions: list[str], target: list, nums: list, **kwargs) 
     """
 
     rewards = []
-    for completion, gt in zip(completions, target, strict=True):
+    for completion, gt, nums in zip(completions, target, numss, strict=True):
         think, answer = get_think_and_answer(completion)
         reward = 0.0
         if answer is not None:
