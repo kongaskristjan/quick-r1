@@ -54,9 +54,9 @@ def get_think_and_answer(completion: str) -> tuple[str | None, str | None]:
     return extracts[1], extracts[3]
 
 
-def eval_answer(answer: str, nums: list[int]) -> float | None:
+def eval_answer(answer: str, nums: list) -> float | None:
     assert isinstance(answer, str)
-    assert all(isinstance(n, int) for n in nums)
+    nums = [int(n) for n in nums]
     answer = answer.strip()
 
     # Check if the answer only contains numbers, operators, parentheses, and whitespace
@@ -97,7 +97,7 @@ def format_reward(completions: list[str], **kwargs) -> list[float]:
     return rewards
 
 
-def expression_format_reward(completions: list[str], nums: list[int], **kwargs) -> list[float]:
+def expression_format_reward(completions: list[str], nums: list, **kwargs) -> list[float]:
     """
     Checks if the answer is a valid expression using only the numbers provided
     Args:
@@ -117,15 +117,16 @@ def expression_format_reward(completions: list[str], nums: list[int], **kwargs) 
     return rewards
 
 
-def equation_reward(completions: list[str], target: list[int], nums: list[int], **kwargs) -> list[float]:
+def equation_reward(completions: list[str], target: list, nums: list, **kwargs) -> list[float]:
     """
     Evaluates completions based on:
-    2. Mathematical correctness of the answer
+    1. Mathematical correctness of the answer
+    2. Use of all numbers exactly once
 
     Args:
         completions (list[str]): Generated outputs
         target (list[str]): Expected number the expression should evaluate to
-        nums (list[str]): Available numbers
+        nums (list[int]): Available numbers
 
     Returns:
         list[float]: Reward scores
@@ -137,7 +138,7 @@ def equation_reward(completions: list[str], target: list[int], nums: list[int], 
         reward = 0.0
         if answer is not None:
             result = eval_answer(answer, nums)
-            if result is not None and abs(result - gt) < 1e-5:
+            if result is not None and abs(result - float(gt)) < 1e-5:
                 reward = 0.8
         rewards.append(reward)
 

@@ -1,5 +1,7 @@
-from lib.dataset import load_countdown_dataset
 from transformers import AutoTokenizer
+
+from lib.dataset import load_countdown_dataset
+
 
 def test_load_dataset():
     tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen2.5-0.5B-Instruct")
