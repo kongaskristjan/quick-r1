@@ -60,7 +60,7 @@ def test_expression_format_reward():
         "reasoning...</think><answer> 1 + 2 / 3 </answer>",
         "reasoning...</think><answer> (59 - 29) + 21 </answer>",
     ]
-    nums = ["59", "21", "29"]
+    nums = [59, 21, 29]
     assert rewards_to_correct(expression_format_reward(completions, nums)) == [False, False, False, False, True]
 
 
@@ -72,8 +72,8 @@ def test_equation_reward():
         "reasoning...</think><answer>2 + 3 / 1</answer>",
     ]
 
-    target = ["5"] * len(completions)
-    nums = ["1", "2", "3"]
+    target = [5] * len(completions)
+    nums = [1, 2, 3]
     assert rewards_to_correct(equation_reward(completions, target, nums)) == [False, False, False, True]
 
 
@@ -86,8 +86,8 @@ def test_rewards():
         "reasoning...</think><answer>1+2/3</answer>",
         "reasoning...</think><answer>2+3/1</answer>",
     ]
-    nums = ["2", "3", "1"]
-    target = ["5"] * len(completions)
+    nums = [2, 3, 1]
+    target = [5] * len(completions)
     assert format_reward(completions) == [0.0, 0.1, 0.1, 0.1, 0.1, 0.1]
     assert expression_format_reward(completions, nums) == [0.0, 0.0, 0.0, 0.0, 0.1, 0.1]
     assert equation_reward(completions, target, nums) == [0.0, 0.0, 0.0, 0.0, 0.0, 0.8]

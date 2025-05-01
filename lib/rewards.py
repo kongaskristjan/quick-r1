@@ -54,8 +54,9 @@ def get_think_and_answer(completion: str) -> tuple[str | None, str | None]:
     return extracts[1], extracts[3]
 
 
-def eval_answer(answer: str, nums: list[str]) -> float | None:
-    assert all(isinstance(n, str) for n in nums)
+def eval_answer(answer: str, nums: list[int]) -> float | None:
+    assert isinstance(answer, str)
+    assert all(isinstance(n, int) for n in nums)
     answer = answer.strip()
 
     # Check if the answer only contains numbers, operators, parentheses, and whitespace
@@ -63,12 +64,12 @@ def eval_answer(answer: str, nums: list[str]) -> float | None:
     if not re.match(allowed_pattern, answer):
         return None
 
-    # Check if the answer uses all the numbers exactly once
-    used_numbers = [n for n in re.findall(r"\d+", answer)]
-    if sorted(used_numbers) != sorted(nums):
-        return None
-
     try:
+        # Check if the answer uses all the numbers exactly once
+        used_numbers = [int(n) for n in re.findall(r"\d+", answer)]
+        if sorted(used_numbers) != sorted(nums):
+            return None
+
         # Evaluate the answer
         result = eval(answer, {"__builtins__": None}, {})
         return float(result)
@@ -96,7 +97,7 @@ def format_reward(completions: list[str], **kwargs) -> list[float]:
     return rewards
 
 
-def expression_format_reward(completions: list[str], nums: list[str], **kwargs) -> list[float]:
+def expression_format_reward(completions: list[str], nums: list[int], **kwargs) -> list[float]:
     """
     Checks if the answer is a valid expression using only the numbers provided
     Args:
@@ -116,7 +117,7 @@ def expression_format_reward(completions: list[str], nums: list[str], **kwargs) 
     return rewards
 
 
-def equation_reward(completions: list[str], target: list[str], nums: list[str], **kwargs) -> list[float]:
+def equation_reward(completions: list[str], target: list[int], nums: list[int], **kwargs) -> list[float]:
     """
     Evaluates completions based on:
     2. Mathematical correctness of the answer
@@ -136,7 +137,7 @@ def equation_reward(completions: list[str], target: list[str], nums: list[str], 
         reward = 0.0
         if answer is not None:
             result = eval_answer(answer, nums)
-            if result is not None and abs(result - float(gt)) < 1e-5:
+            if result is not None and abs(result - gt) < 1e-5:
                 reward = 0.8
         rewards.append(reward)
 
