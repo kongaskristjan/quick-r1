@@ -97,7 +97,7 @@ def format_reward(completions: list[str], **kwargs) -> list[float]:
     return rewards
 
 
-def expression_format_reward(completions: list[str], numss: list[list[int]], **kwargs) -> list[float]:
+def expression_format_reward(completions: list[str], nums: list[list[int]], **kwargs) -> list[float]:
     """
     Checks if the answer is a valid expression using only the numbers provided
     Args:
@@ -108,16 +108,16 @@ def expression_format_reward(completions: list[str], numss: list[list[int]], **k
         list[float]: Reward scores
     """
     rewards = []
-    for completion, nums in zip(completions, numss, strict=True):
+    for completion, nums1 in zip(completions, nums, strict=True):
         think, answer = get_think_and_answer(completion)
-        correct = answer is not None and eval_answer(answer, nums) is not None
+        correct = answer is not None and eval_answer(answer, nums1) is not None
         reward = 0.1 if correct else 0.0
         rewards.append(reward)
 
     return rewards
 
 
-def equation_reward(completions: list[str], target: list[int], numss: list[list[int]], **kwargs) -> list[float]:
+def equation_reward(completions: list[str], target: list[int], nums: list[list[int]], **kwargs) -> list[float]:
     """
     Evaluates completions based on:
     1. Mathematical correctness of the answer
@@ -133,11 +133,11 @@ def equation_reward(completions: list[str], target: list[int], numss: list[list[
     """
 
     rewards = []
-    for completion, gt, nums in zip(completions, target, numss, strict=True):
+    for completion, gt, nums1 in zip(completions, target, nums, strict=True):
         think, answer = get_think_and_answer(completion)
         reward = 0.0
         if answer is not None:
-            result = eval_answer(answer, nums)
+            result = eval_answer(answer, nums1)
             if result is not None and abs(result - float(gt)) < 1e-5:
                 reward = 0.8
         rewards.append(reward)

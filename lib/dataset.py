@@ -21,17 +21,9 @@ def _generate_prompt(target: int, nums: list[int], tokenizer: AutoTokenizer) -> 
 
 
 def load_countdown_dataset(tokenizer: AutoTokenizer, size: int = 50000) -> tuple[Dataset, Dataset]:
-    # Load dataset from Hugging Face Hub
     dataset = load_dataset("Jiayi-Pan/Countdown-Tasks-3to4", split="train")
-    # select a random subset of 50k samples
     dataset = dataset.shuffle(seed=42).select(range(size))
-
-    # Generate r1 prompt with a prefix for the model to already start with the thinking process
-
-    # convert our dataset to the r1 prompt
     dataset = dataset.map(lambda x: _generate_prompt(x["target"], x["nums"], tokenizer))
-
-    # split the dataset into train and test
     train_test_split = dataset.train_test_split(test_size=0.1)
 
     train_dataset = train_test_split["train"]
