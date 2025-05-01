@@ -48,8 +48,7 @@ def main() -> None:
     # Hyperparameters
     training_args = GRPOConfig(
         output_dir="qwen-r1-aha-moment",
-        learning_rate=2e-6,
-        lr_scheduler_type="cosine",
+        learning_rate=1e-6,
         optim="adamw_8bit",
         adam_beta1=0.9,
         adam_beta2=0.99,
@@ -66,9 +65,9 @@ def main() -> None:
         max_completion_length=1024,  # max length of the generated output for our solution
         num_generations=8,
         beta=0.05,
-        scale_rewards=False,
-        loss_type="dr_grpo",
-        mask_truncated_completions=True,
+        #        scale_rewards=False,
+        #        loss_type="dr_grpo",
+        #        mask_truncated_completions=True,
     )
 
     # Training loop
