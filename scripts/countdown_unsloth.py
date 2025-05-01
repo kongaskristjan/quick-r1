@@ -49,7 +49,8 @@ def main() -> None:
     dataset = dataset.shuffle(seed=42).select(range(50000))
 
     # Generate r1 prompt with a prefix for the model to already start with the thinking process
-    def generate_r1_prompt(target: str, nums: list[int]):
+    def generate_r1_prompt(target: str, nums: list[str]):
+        assert all(isinstance(n, str) for n in nums)
         r1_prefix = [
             {
                 "role": "system",

@@ -54,7 +54,8 @@ def get_think_and_answer(completion: str) -> tuple[str | None, str | None]:
     return extracts[1], extracts[3]
 
 
-def eval_answer(answer: str, nums: list[int]) -> float | None:
+def eval_answer(answer: str, nums: list[str]) -> float | None:
+    assert all(isinstance(n, str) for n in nums)
     answer = answer.strip()
 
     # Check if the answer only contains numbers, operators, parentheses, and whitespace
@@ -63,7 +64,7 @@ def eval_answer(answer: str, nums: list[int]) -> float | None:
         return None
 
     # Check if the answer uses all the numbers exactly once
-    used_numbers = [int(n) for n in re.findall(r"\d+", answer)]
+    used_numbers = [n for n in re.findall(r"\d+", answer)]
     if sorted(used_numbers) != sorted(nums):
         return None
 
@@ -95,12 +96,12 @@ def format_reward(completions: list[str], **kwargs) -> list[float]:
     return rewards
 
 
-def expression_format_reward(completions: list[str], nums: list[int], **kwargs) -> list[float]:
+def expression_format_reward(completions: list[str], nums: list[str], **kwargs) -> list[float]:
     """
     Checks if the answer is a valid expression using only the numbers provided
     Args:
         completions (list[str]): Generated outputs
-        nums (list[int]): Available numbers
+        nums (list[str]): Available numbers
 
     Returns:
         list[float]: Reward scores
@@ -115,7 +116,7 @@ def expression_format_reward(completions: list[str], nums: list[int], **kwargs) 
     return rewards
 
 
-def equation_reward(completions: list[str], target: list[str], nums: list[int], **kwargs) -> list[float]:
+def equation_reward(completions: list[str], target: list[str], nums: list[str], **kwargs) -> list[float]:
     """
     Evaluates completions based on:
     2. Mathematical correctness of the answer
@@ -123,7 +124,7 @@ def equation_reward(completions: list[str], target: list[str], nums: list[int], 
     Args:
         completions (list[str]): Generated outputs
         target (list[str]): Expected number the expression should evaluate to
-        nums (list[int]): Available numbers
+        nums (list[str]): Available numbers
 
     Returns:
         list[float]: Reward scores

@@ -1,6 +1,10 @@
 from lib.rewards import _extract_between, _find_all, equation_reward, expression_format_reward, format_reward, get_think_and_answer
 
 
+def rewards_to_correct(rewards: list[float]) -> list[bool]:
+    return [reward > 0.0 for reward in rewards]
+
+
 def test_find_all():
     completion = "<think>reasoning... </think><answer>1+2/3</answer>"
     indices = _find_all(completion, "</think>")
@@ -40,6 +44,39 @@ def test_get_think_and_answer():
     assert think is None and answer is None
 
 
+def test_format_reward():
+    completions = [
+        "reasoning... Wrong format</answer>",
+        "reasoning...</think><answer>Correct format</answer>",
+    ]
+    assert rewards_to_correct(format_reward(completions)) == [False, True]
+
+
+def test_expression_format_reward():
+    completions = [
+        "reasoning... Wrong format</answer>",
+        "reasoning...</think><answer>Wrong expression format</answer>",
+        "reasoning...</think><answer>1 + 2 / 3 = 5</answer>",
+        "reasoning...</think><answer> 1 + 2 / 3 </answer>",
+        "reasoning...</think><answer> (59 - 29) + 21 </answer>",
+    ]
+    nums = ["59", "21", "29"]
+    assert rewards_to_correct(expression_format_reward(completions, nums)) == [False, False, False, False, True]
+
+
+def test_equation_reward():
+    completions = [
+        "reasoning... Wrong format</answer>",
+        "reasoning...</think><answer>Wrong equation format</answer>",
+        "reasoning...</think><answer>1 / 3 + 2</answer>",
+        "reasoning...</think><answer>2 + 3 / 1</answer>",
+    ]
+
+    target = ["5"] * len(completions)
+    nums = ["1", "2", "3"]
+    assert rewards_to_correct(equation_reward(completions, target, nums)) == [False, False, False, True]
+
+
 def test_rewards():
     completions = [
         "reasoning... Wrong format</answer>",
@@ -49,8 +86,8 @@ def test_rewards():
         "reasoning...</think><answer>1+2/3</answer>",
         "reasoning...</think><answer>2+3/1</answer>",
     ]
-    nums = [2, 3, 1]
-    target = ["5", "5", "5", "5", "5", "5"]
+    nums = ["2", "3", "1"]
+    target = ["5"] * len(completions)
     assert format_reward(completions) == [0.0, 0.1, 0.1, 0.1, 0.1, 0.1]
     assert expression_format_reward(completions, nums) == [0.0, 0.0, 0.0, 0.0, 0.1, 0.1]
     assert equation_reward(completions, target, nums) == [0.0, 0.0, 0.0, 0.0, 0.0, 0.8]
