@@ -56,14 +56,14 @@ def main() -> None:
         fp16=not is_bfloat16_supported(),
         logging_steps=1,
         max_steps=450,
-        per_device_train_batch_size=1,
+        per_device_train_batch_size=16,
         gradient_accumulation_steps=1,
         gradient_checkpointing=True,
         gradient_checkpointing_kwargs={"use_reentrant": False},
         # GRPO specific parameters
         max_prompt_length=256,
         max_completion_length=1024,  # max length of the generated output for our solution
-        num_generations=8,
+        num_generations=4,
         beta=0.05,
         #        scale_rewards=False,
         #        loss_type="dr_grpo",
