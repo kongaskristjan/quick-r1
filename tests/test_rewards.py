@@ -1,8 +1,24 @@
-from lib.rewards import format_reward, expression_format_reward, equation_reward, get_think_and_answer
+from lib.rewards import _extract_between, _find_all, equation_reward, expression_format_reward, format_reward, get_think_and_answer
+
+
+def test_find_all():
+    completion = "<think>reasoning... </think><answer>1+2/3</answer>"
+    indices = _find_all(completion, "</think>")
+    assert indices == [completion.find("</think>")]
+
+
+def test_extract_between():
+    completion = "<think>reasoning... </think> - <answer>1+2/3</answer>"
+    extracts = _extract_between(completion, ["<think>", "</think>", "<answer>", "</answer>"])
+    assert extracts == ["", "reasoning... ", " - ", "1+2/3", ""]
+
+    assert _extract_between("<tag>", ["<tag>"]) is not None
+    assert _extract_between("<tag><tag>", ["<tag>"]) is None
+    assert _extract_between("<tag>", ["<tag>", "</tag>"]) is None
 
 
 def test_get_think_and_answer():
-    completion = "reasoning... </think><answer>1+2/3</answer>"
+    completion = "reasoning... </think> \n <answer>1+2/3</answer>"
     think, answer = get_think_and_answer(completion)
     assert think == "reasoning... "
     assert answer == "1+2/3"
@@ -22,6 +38,7 @@ def test_get_think_and_answer():
     completion = "reasoning...</think><answer>123</answer><answer>456</answer>"
     think, answer = get_think_and_answer(completion)
     assert think is None and answer is None
+
 
 def test_rewards():
     completions = [

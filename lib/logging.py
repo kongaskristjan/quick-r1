@@ -1,5 +1,5 @@
+from lib.rewards import equation_reward, expression_format_reward, format_reward, get_think_and_answer
 
-from lib.rewards import get_think_and_answer, format_reward, expression_format_reward, equation_reward
 
 def replace_newlines(s: str) -> str:
     return s.replace("\n", "<br>")

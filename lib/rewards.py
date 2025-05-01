@@ -1,7 +1,7 @@
-
 import re
 
-def find_all(s: str, substr: str) -> list[int]:
+
+def _find_all(s: str, substr: str) -> list[int]:
     """
     Finds all occurrences of a substring in a string
     Args:
@@ -22,7 +22,7 @@ def find_all(s: str, substr: str) -> list[int]:
     return indices
 
 
-def extract_between(completion: str, tags: list[str]) -> list[str] | None:
+def _extract_between(completion: str, tags: list[str]) -> list[str] | None:
     """
     Extracts the text between the tags in the completion
     Args:
@@ -32,13 +32,13 @@ def extract_between(completion: str, tags: list[str]) -> list[str] | None:
     Returns:
         list[str]: The text between the tags
     """
-    indices = [find_all(completion, tag) for tag in tags]
+    indices = [_find_all(completion, tag) for tag in tags]
     if any(len(i) != 1 for i in indices):
         return None
     first_indices = [i[0] for i in indices]
     padded_indices = [0] + first_indices + [len(completion)]
     padded_tags = [""] + tags + [""]
-    extracts = [completion[padded_indices[i] + len(padded_tags[i]):padded_indices[i+1]] for i in range(len(padded_indices)-1)]
+    extracts = [completion[padded_indices[i] + len(padded_tags[i]) : padded_indices[i + 1]] for i in range(len(padded_indices) - 1)]
     return extracts
 
 
@@ -46,7 +46,7 @@ def get_think_and_answer(completion: str) -> tuple[str | None, str | None]:
     # add synthetic <think> as its already part of the prompt and prefilled for the assistant to more easily match the regex
     completion = "<think>" + completion
 
-    extracts = extract_between(completion, ["<think>", "</think>", "<answer>", "</answer>"])
+    extracts = _extract_between(completion, ["<think>", "</think>", "<answer>", "</answer>"])
     if extracts is None:
         return None, None
     if extracts[2].strip() != "" or extracts[4].strip() != "":

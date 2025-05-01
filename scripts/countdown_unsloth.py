@@ -8,8 +8,10 @@ os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "1"
 
 from datasets import load_dataset
 from trl import GRPOConfig, GRPOTrainer
-from lib.rewards import format_reward, expression_format_reward, equation_reward
+
 from lib.logging import log_completion
+from lib.rewards import equation_reward, expression_format_reward, format_reward
+
 
 def main() -> None:
     lora_rank = 256  # Larger rank = smarter, but slower. Suggested 8, 16, 32, 64, 128
