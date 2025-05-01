@@ -51,6 +51,7 @@ def main() -> None:
     # Generate r1 prompt with a prefix for the model to already start with the thinking process
     def generate_r1_prompt(target: str, nums: list[str]):
         assert all(isinstance(n, str) for n in nums)
+        nums_formatted = ", ".join(nums)
         r1_prefix = [
             {
                 "role": "system",
@@ -58,7 +59,7 @@ def main() -> None:
             },
             {
                 "role": "user",
-                "content": f"Using the numbers {nums}, create an equation that equals {target}. You can use basic arithmetic operations (+, -, *, /) one or multiple times but each number can only be used once. Show your work in <think> </think> tags. And return the final equation in <answer> </answer> tags, for example <answer> (1 + 2) / 3 </answer>. Think step by step inside <think> tags.",
+                "content": f"Using the numbers {nums_formatted}, create an equation that equals {target}. You can use basic arithmetic operations (+, -, *, /) one or multiple times but each number can only be used once. Show your work in <think> </think> tags. And return the final equation in <answer> </answer> tags, for example <answer> (1 + 2) / 3 </answer>. Think step by step inside <think> tags.",
             },
             {"role": "assistant", "content": "Let me solve this step by step.\n<think>"},
         ]
