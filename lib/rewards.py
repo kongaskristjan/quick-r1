@@ -1,16 +1,57 @@
+
 import re
+
+def find_all(s: str, substr: str) -> list[int]:
+    """
+    Finds all occurrences of a substring in a string
+    Args:
+        s (str): The string to search
+        substr (str): The substring to find
+
+    Returns:
+        list[int]: The start indices of the substring
+    """
+    indices = []
+    start = 0
+    while True:
+        start = s.find(substr, start)
+        if start == -1:
+            break
+        indices.append(start)
+        start += len(substr)
+    return indices
+
+
+def extract_between(completion: str, tags: list[str]) -> list[str] | None:
+    """
+    Extracts the text between the tags in the completion
+    Args:
+        completion (str): The completion to extract the text from
+        tags (list[str]): The tags to extract the text between
+
+    Returns:
+        list[str]: The text between the tags
+    """
+    indices = [find_all(completion, tag) for tag in tags]
+    if any(len(i) != 1 for i in indices):
+        return None
+    first_indices = [i[0] for i in indices]
+    padded_indices = [0] + first_indices + [len(completion)]
+    padded_tags = [""] + tags + [""]
+    extracts = [completion[padded_indices[i] + len(padded_tags[i]):padded_indices[i+1]] for i in range(len(padded_indices)-1)]
+    return extracts
+
 
 def get_think_and_answer(completion: str) -> tuple[str | None, str | None]:
     # add synthetic <think> as its already part of the prompt and prefilled for the assistant to more easily match the regex
     completion = "<think>" + completion
 
-    # Check if the format is correct and extract the necessary parts
-    regex = r"^<think>([^<]*(?:<(?!/?think>)[^<]*)*)<\/think>\s*<answer>([\s\S]*?)<\/answer>$"
-    match = re.fullmatch(regex, completion, re.DOTALL)
-    if match is None or len(match.groups()) != 2:
+    extracts = extract_between(completion, ["<think>", "</think>", "<answer>", "</answer>"])
+    if extracts is None:
         return None, None
-    think, answer = match.groups()
-    return think, answer
+    if extracts[2].strip() != "" or extracts[4].strip() != "":
+        return None, None
+    return extracts[1], extracts[3]
 
 
 def eval_answer(answer: str, nums: list[int]) -> float | None:
